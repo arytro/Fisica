@@ -1,0 +1,6 @@
+{
+  "name": "FRICTION LAB – Laboratorio de Fricción",
+  "description": "Simulador educativo e interactivo de física para experimentar con fricción estática y cinética, gráficas dinámicas y modo desafío.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
