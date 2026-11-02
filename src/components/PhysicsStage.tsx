@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Material, MotionState } from '../types/physics';
-import { ArrowRight, MoveRight, Flame, ShieldAlert, Sparkles, Gauge } from 'lucide-react';
+import { Material, MotionState, VisibilityFilters } from '../types/physics';
+import { ArrowRight, MoveRight, Flame, ShieldAlert, Sparkles, Gauge, Compass, Mountain } from 'lucide-react';
 import { StickmanPusher } from './StickmanPusher';
 
 interface PhysicsStageProps {
@@ -21,6 +21,10 @@ interface PhysicsStageProps {
   showStaticBreachedAlert: boolean;
   speedLimit?: number | null;
   isSpeedLimited?: boolean;
+  inclineAngle?: number;
+  slopeParallelForce?: number;
+  netForce?: number;
+  visibilityFilters?: VisibilityFilters;
 }
 
 export const PhysicsStage: React.FC<PhysicsStageProps> = ({
@@ -40,20 +44,44 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
   material,
   showStaticBreachedAlert,
   speedLimit,
-  isSpeedLimited
+  isSpeedLimited,
+  inclineAngle = 0,
+  slopeParallelForce = 0,
+  netForce,
+  visibilityFilters = {
+    includeMass: true,
+    includeGravity: true,
+    showAppliedForce: true,
+    showFriction: true,
+    showNetForce: true
+  }
 }) => {
-  // Arrow scale factors (pixels per Newton)
-  const maxArrowLength = 140;
-  const forceScale = 0.65;
+  const showGravity = visibilityFilters.includeGravity;
+  const showApplied = visibilityFilters.showAppliedForce;
+  const showFric = visibilityFilters.showFriction;
+  const showNet = visibilityFilters.showNetForce;
+  const isMassFixed = !visibilityFilters.includeMass;
 
+  // Effective net force: explicit prop or computed from active components
+  const effectiveNetForce = netForce !== undefined
+    ? netForce
+    : (appliedForce + slopeParallelForce - actualFriction);
+
+  // Arrow scale factors (pixels per Newton)
+  const maxArrowLength = 150;
+  const forceScale = 0.72;
+
+  // Dynamic vector arrow lengths proportional to the forces
   const appliedArrowWidth = Math.min(maxArrowLength, Math.max(16, appliedForce * forceScale));
   const frictionArrowWidth = Math.min(maxArrowLength, Math.max(14, actualFriction * forceScale));
+  const netArrowWidth = Math.min(maxArrowLength, Math.max(20, Math.abs(effectiveNetForce) * forceScale));
   const normalArrowHeight = Math.min(100, Math.max(20, (normalForce / 500) * 80 + 20));
   const weightArrowHeight = normalArrowHeight;
 
-  // Box dimensions based on mass (subtly grows with mass for physical realism)
-  const boxWidth = Math.round(70 + (mass / 50) * 35); // 70px to 105px
-  const boxHeight = Math.round(55 + (mass / 50) * 25); // 55px to 80px
+  // Box dimensions based on mass (or standardized if mass is excluded/predetermined)
+  const displayMass = isMassFixed ? 10 : mass;
+  const boxWidth = Math.round(70 + (displayMass / 50) * 35);
+  const boxHeight = Math.round(55 + (displayMass / 50) * 25);
 
   // Normalized visual track position (wrapped within 0 to 100% of visible viewport track)
   const visualXPercent = useMemo(() => {
@@ -161,8 +189,26 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
           ))}
         </div>
 
-        {/* 2.5D Stage Runway & Surface Area */}
-        <div className="relative w-full z-10">
+        {/* 2.5D Stage Runway & Surface Area (with slope inclination support) */}
+        <div
+          className="relative w-full z-10 transition-transform duration-500 ease-out"
+          style={{
+            transform: inclineAngle > 0 ? `rotate(${Math.min(13, inclineAngle * 0.55)}deg) translateY(${Math.min(18, inclineAngle * 0.6)}px)` : 'none',
+            transformOrigin: '5% 100%'
+          }}
+        >
+
+          {/* Incline Slope HUD Badge */}
+          {inclineAngle > 0 && (
+            <div className="absolute -top-10 left-6 z-20 pointer-events-none flex items-center gap-2 bg-slate-950/90 border border-cyan-500/40 px-2.5 py-1 rounded-xl shadow-lg backdrop-blur-sm">
+              <Mountain className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="flex items-center gap-1.5 text-[10px] font-mono">
+                <span className="font-bold text-cyan-300">Cuesta {inclineAngle}°</span>
+                <span className="text-slate-400">·</span>
+                <span className="text-amber-300 font-semibold">P_∥ = {slopeParallelForce.toFixed(1)} N</span>
+              </div>
+            </div>
+          )}
 
           {/* Crate Object Container with dynamic position */}
           <div
@@ -174,32 +220,36 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
           >
             {/* VECTOR ARROWS - Centered on Crate */}
             
-            {/* 1. Normal Force Arrow (UP - Emerald) */}
-            <div
-              className="absolute left-1/2 bottom-[100%] -translate-x-1/2 flex flex-col items-center pointer-events-none transition-all duration-150"
-              style={{ height: `${normalArrowHeight}px` }}
-            >
-              <div className="text-[10px] font-mono font-bold text-emerald-400 whitespace-nowrap bg-slate-950/90 px-1.5 py-0.5 rounded border border-emerald-500/30 mb-0.5 shadow-sm">
-                N = {normalForce.toFixed(1)} N
+            {/* 1. Normal Force Arrow (UP - Emerald) - Hidden if gravity filter is unchecked */}
+            {showGravity && (
+              <div
+                className="absolute left-1/2 bottom-[100%] -translate-x-1/2 flex flex-col items-center pointer-events-none transition-all duration-150 z-20"
+                style={{ height: `${normalArrowHeight}px` }}
+              >
+                <div className="text-[10px] font-mono font-bold text-emerald-400 whitespace-nowrap bg-slate-950/90 px-1.5 py-0.5 rounded border border-emerald-500/30 mb-0.5 shadow-sm">
+                  N = {normalForce.toFixed(1)} N
+                </div>
+                <div className="w-0.5 flex-1 bg-gradient-to-t from-emerald-600 to-emerald-400" />
+                <div className="w-0 h-0 border-x-4 border-x-transparent border-b-6 border-b-emerald-400 -mt-1 rotate-180" />
               </div>
-              <div className="w-0.5 flex-1 bg-gradient-to-t from-emerald-600 to-emerald-400" />
-              <div className="w-0 h-0 border-x-4 border-x-transparent border-b-6 border-b-emerald-400 -mt-1 rotate-180" />
-            </div>
+            )}
 
-            {/* 2. Weight / Gravity Arrow (DOWN - Violet) */}
-            <div
-              className="absolute left-1/2 top-[100%] -translate-x-1/2 flex flex-col items-center pointer-events-none transition-all duration-150 z-20"
-              style={{ height: `${weightArrowHeight}px` }}
-            >
-              <div className="w-0.5 flex-1 bg-gradient-to-b from-indigo-500 to-violet-400" />
-              <div className="w-0 h-0 border-x-4 border-x-transparent border-t-6 border-t-violet-400 -mb-1" />
-              <div className="text-[10px] font-mono font-bold text-violet-300 whitespace-nowrap bg-slate-950/90 px-1.5 py-0.5 rounded border border-violet-500/30 mt-0.5 shadow-sm">
-                P = {weight.toFixed(1)} N
+            {/* 2. Weight / Gravity Arrow (DOWN - Violet) - Hidden if gravity filter is unchecked */}
+            {showGravity && (
+              <div
+                className="absolute left-1/2 top-[100%] -translate-x-1/2 flex flex-col items-center pointer-events-none transition-all duration-150 z-20"
+                style={{ height: `${weightArrowHeight}px` }}
+              >
+                <div className="w-0.5 flex-1 bg-gradient-to-b from-indigo-500 to-violet-400" />
+                <div className="w-0 h-0 border-x-4 border-x-transparent border-t-6 border-t-violet-400 -mb-1" />
+                <div className="text-[10px] font-mono font-bold text-violet-300 whitespace-nowrap bg-slate-950/90 px-1.5 py-0.5 rounded border border-violet-500/30 mt-0.5 shadow-sm">
+                  P = {weight.toFixed(1)} N
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* 3. Applied Force Arrow (RIGHT - Electric Cyan) */}
-            {appliedForce > 0 && (
+            {/* 3. Applied Force Arrow (RIGHT - Electric Cyan) - Scaled with applied force */}
+            {showApplied && appliedForce > 0 && (
               <div
                 className="absolute top-1/2 left-[100%] -translate-y-1/2 flex items-center pointer-events-none transition-all duration-100 z-20"
                 style={{ width: `${appliedArrowWidth}px` }}
@@ -212,8 +262,22 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
               </div>
             )}
 
-            {/* 4. Friction Force Arrow (LEFT - Amber/Red at contact surface) */}
-            {actualFriction > 0 && (
+            {/* Incline Downhill Gravity Component Arrow P_parallel */}
+            {inclineAngle > 0 && slopeParallelForce > 0.1 && (
+              <div
+                className="absolute top-3/4 left-[100%] -translate-y-1/2 flex items-center pointer-events-none transition-all duration-100 z-20"
+                style={{ width: `${Math.min(140, 20 + slopeParallelForce * 0.75)}px` }}
+              >
+                <div className="h-1 flex-1 bg-gradient-to-r from-amber-500 to-orange-400 shadow-sm shadow-orange-400" />
+                <div className="w-0 h-0 border-y-3.5 border-y-transparent border-l-5 border-l-orange-400 -ml-1" />
+                <div className="text-[9px] font-mono font-bold text-orange-300 whitespace-nowrap bg-slate-950/90 px-1.5 py-0.5 rounded border border-orange-500/40 ml-1 shadow-sm">
+                  P_∥ = {slopeParallelForce.toFixed(1)} N
+                </div>
+              </div>
+            )}
+
+            {/* 4. Friction Force Arrow (LEFT - Amber/Red at contact surface) - Scaled with actual friction */}
+            {showFric && actualFriction > 0 && (
               <div
                 className="absolute bottom-1 right-[100%] flex items-center flex-row-reverse pointer-events-none transition-all duration-100 z-30"
                 style={{ width: `${frictionArrowWidth}px` }}
@@ -223,6 +287,32 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
                 <div className="text-[10px] font-mono font-bold text-rose-300 whitespace-nowrap bg-slate-950/90 px-1.5 py-0.5 rounded border border-rose-500/40 mr-1.5 shadow-sm">
                   {isMoving ? 'fk' : 'fs'} = {actualFriction.toFixed(1)} N
                 </div>
+              </div>
+            )}
+
+            {/* 5. NET FORCE ARROW (ΣF / F_neta) - Scales with resultant net force */}
+            {showNet && (
+              <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-30">
+                {Math.abs(effectiveNetForce) > 0.05 ? (
+                  <div className={`flex items-center ${effectiveNetForce > 0 ? '' : 'flex-row-reverse'}`}>
+                    <div
+                      className="h-1.5 rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 shadow-md shadow-emerald-400/50"
+                      style={{ width: `${netArrowWidth}px` }}
+                    />
+                    <div className={`w-0 h-0 border-y-4 border-y-transparent ${
+                      effectiveNetForce > 0
+                        ? 'border-l-6 border-l-emerald-300 -ml-1'
+                        : 'border-r-6 border-r-emerald-300 -mr-1'
+                    }`} />
+                    <div className="text-[10px] font-mono font-extrabold text-emerald-300 whitespace-nowrap bg-slate-950/95 px-2 py-0.5 rounded-full border border-emerald-400/50 ml-1.5 shadow-lg shadow-emerald-500/20">
+                      ΣF = {effectiveNetForce > 0 ? `+${effectiveNetForce.toFixed(1)}` : effectiveNetForce.toFixed(1)} N
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-[9px] font-mono font-bold text-slate-400 bg-slate-950/90 px-2 py-0.5 rounded-full border border-slate-700 shadow-sm whitespace-nowrap">
+                    ΣF = 0 N (Equilibrio)
+                  </div>
+                )}
               </div>
             )}
 
@@ -237,7 +327,7 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
             />
 
             {/* Movement Direction Indicator Badge */}
-            {isMoving && (
+            {isMoving && !showNet && (
               <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full whitespace-nowrap animate-pulse shadow-md">
                 <span>Avance</span>
                 <MoveRight className="w-3 h-3 text-emerald-400" />
@@ -292,10 +382,10 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
                 {/* Center Mass Badge */}
                 <div className="text-center z-10 my-auto">
                   <div className="text-xs sm:text-sm font-extrabold font-mono text-white tracking-tight drop-shadow">
-                    {mass} kg
+                    {displayMass} kg
                   </div>
                   <div className="text-[8px] font-semibold text-amber-200/80 uppercase">
-                    Objeto de Prueba
+                    {isMassFixed ? 'Masa Predet.' : 'Objeto de Prueba'}
                   </div>
                 </div>
 
@@ -369,28 +459,50 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
 
       {/* Free-Body Diagram Legend Banner */}
       <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex flex-wrap items-center gap-4 text-slate-400">
-          <span className="text-[11px] font-semibold text-slate-300">Diagrama de Cuerpo Libre:</span>
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-slate-400">
+          <span className="text-[11px] font-semibold text-slate-300">Vectores Activos:</span>
           
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-1 bg-cyan-400 rounded-sm" />
-            <span>Fuerza Aplicada (F_app)</span>
-          </div>
+          {showApplied && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-1 bg-cyan-400 rounded-sm" />
+              <span>Fuerza Aplicada (F_app)</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-1 bg-rose-400 rounded-sm" />
-            <span>Fuerza de Fricción (f)</span>
-          </div>
+          {showFric && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-1 bg-rose-400 rounded-sm" />
+              <span>Fricción (f)</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-1 bg-emerald-400 rounded-sm" />
-            <span>Fuerza Normal (N)</span>
-          </div>
+          {showNet && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-1 bg-emerald-400 rounded-sm" />
+              <span className="text-emerald-300 font-semibold">Fuerza Neta (ΣF)</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-1 bg-violet-400 rounded-sm" />
-            <span>Peso / Gravedad (P = mg)</span>
-          </div>
+          {showGravity && (
+            <>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-1 bg-emerald-400 rounded-sm" />
+                <span>Normal (N)</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-1 bg-violet-400 rounded-sm" />
+                <span>Peso (P = mg)</span>
+              </div>
+            </>
+          )}
+
+          {inclineAngle > 0 && showGravity && (
+            <div className="flex items-center gap-1.5 text-orange-300">
+              <span className="w-3 h-1 bg-orange-400 rounded-sm" />
+              <span>Componente Pendiente (P_∥)</span>
+            </div>
+          )}
         </div>
 
         {/* Quick summary comparison */}

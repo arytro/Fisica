@@ -12,7 +12,8 @@ export function calculateDerivedPhysics(
   currentVelocity: number = 0,
   customMuS?: number,
   customMuK?: number,
-  speedLimit?: number | null
+  speedLimit?: number | null,
+  inclineAngle: number = 0
 ): PhysicsDerivedValues {
   // Prevent invalid mass or forces
   const safeMass = Math.max(0.1, mass);
@@ -20,9 +21,18 @@ export function calculateDerivedPhysics(
   const muS = customMuS ?? material.muS;
   const muK = customMuK ?? material.muK;
 
-  // Normal force & Weight on a horizontal surface: N = W = m * g
+  const incline = Math.max(0, Math.min(60, inclineAngle));
+  const thetaRad = (incline * Math.PI) / 180;
+  const cosTheta = Math.cos(thetaRad);
+  const sinTheta = Math.sin(thetaRad);
+
+  // Weight acts straight down: P = m * g
   const weight = safeMass * GRAVITY;
-  const normalForce = weight;
+  // Perpendicular component and normal force: N = P_perp = m * g * cos(theta)
+  const slopePerpendicularForce = weight * cosTheta;
+  const normalForce = slopePerpendicularForce;
+  // Parallel gravity component pulling downhill: P_parallel = m * g * sin(theta)
+  const slopeParallelForce = weight * sinTheta;
 
   // Maximum static friction limit: fs_max = mu_s * N
   const maxStaticFriction = muS * normalForce;
@@ -30,29 +40,32 @@ export function calculateDerivedPhysics(
   // Kinetic friction: fk = mu_k * N
   const kineticFriction = muK * normalForce;
 
+  // Total driving force along the slope (applied push + downhill gravity):
+  const drivingForce = safeForce + slopeParallelForce;
+
   // Determine actual friction according to motion state:
   const isMoving = currentVelocity > 0.0001;
-  const isOvercomingStatic = safeForce > maxStaticFriction;
+  const isOvercomingStatic = drivingForce > maxStaticFriction;
 
   let actualFriction = 0;
   let netHorizontalForce = 0;
   let instantAcceleration = 0;
 
   if (isMoving) {
-    // When in motion, friction is kinetic
+    // When in motion, kinetic friction opposes the downhill driving force
     actualFriction = kineticFriction;
-    netHorizontalForce = safeForce - actualFriction;
+    netHorizontalForce = drivingForce - actualFriction;
     instantAcceleration = netHorizontalForce / safeMass;
   } else {
     // When at rest
     if (isOvercomingStatic) {
-      // Force exceeds threshold: transitions immediately to kinetic
+      // Driving force exceeds static threshold: transitions immediately to kinetic
       actualFriction = kineticFriction;
-      netHorizontalForce = safeForce - actualFriction;
+      netHorizontalForce = drivingForce - actualFriction;
       instantAcceleration = netHorizontalForce / safeMass;
     } else {
-      // Static friction exactly balances applied force up to fs_max
-      actualFriction = safeForce;
+      // Static friction exactly balances driving force up to fs_max
+      actualFriction = drivingForce;
       netHorizontalForce = 0;
       instantAcceleration = 0;
     }
@@ -64,6 +77,8 @@ export function calculateDerivedPhysics(
     gravity: GRAVITY,
     normalForce,
     weight,
+    slopeParallelForce,
+    slopePerpendicularForce,
     maxStaticFriction,
     kineticFriction,
     actualFriction,
@@ -71,7 +86,8 @@ export function calculateDerivedPhysics(
     netHorizontalForce,
     instantAcceleration,
     speedLimit,
-    isSpeedLimited
+    isSpeedLimited,
+    inclineAngle: incline
   };
 }
 
@@ -92,9 +108,19 @@ export function stepPhysics(
   const muS = state.customMuS ?? material.muS;
   const muK = state.customMuK ?? material.muK;
 
-  const normalForce = safeMass * GRAVITY;
+  const incline = Math.max(0, Math.min(60, state.inclineAngle || 0));
+  const thetaRad = (incline * Math.PI) / 180;
+  const cosTheta = Math.cos(thetaRad);
+  const sinTheta = Math.sin(thetaRad);
+
+  const weight = safeMass * GRAVITY;
+  const normalForce = weight * cosTheta;
+  const slopeParallelForce = weight * sinTheta;
+
   const maxStaticFriction = muS * normalForce;
   const kineticFriction = muK * normalForce;
+
+  const drivingForce = state.appliedForce + slopeParallelForce;
 
   let velocity = state.velocity;
   let position = state.position;
@@ -106,11 +132,11 @@ export function stepPhysics(
 
   if (velocity <= 0.00001) {
     // Object was at rest
-    if (state.appliedForce > maxStaticFriction) {
+    if (drivingForce > maxStaticFriction) {
       // OVERCOMES STATIC FRICTION!
       justBrokeStatic = true;
       hasBrokenStatic = true;
-      const netForce = state.appliedForce - kineticFriction;
+      const netForce = drivingForce - kineticFriction;
       acceleration = netForce / safeMass;
       velocity = Math.max(0, velocity + acceleration * scaledDt);
       position += velocity * scaledDt;
@@ -123,8 +149,8 @@ export function stepPhysics(
       motionState = 'rest';
     }
   } else {
-    // Object was already moving: kinetic friction always applies
-    const netForce = state.appliedForce - kineticFriction;
+    // Object was already moving: kinetic friction opposes driving force
+    const netForce = drivingForce - kineticFriction;
     acceleration = netForce / safeMass;
     velocity = velocity + acceleration * scaledDt;
 

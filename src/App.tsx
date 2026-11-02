@@ -15,7 +15,7 @@ import { LearnSection } from './components/LearnSection';
 import { LabReportModal } from './components/LabReportModal';
 import { SimpleSimulatorView } from './components/SimpleSimulatorView';
 import { MATERIALS } from './data/materials';
-import { MaterialId, PhysicsState, SimulationStatus, MotionState } from './types/physics';
+import { MaterialId, PhysicsState, SimulationStatus, MotionState, VisibilityFilters } from './types/physics';
 import { calculateDerivedPhysics, stepPhysics } from './utils/physicsEngine';
 import { sound } from './utils/audio';
 import { Compass, Sparkles, BookOpen, Trophy, HelpCircle, Layers } from 'lucide-react';
@@ -26,6 +26,18 @@ export default function App() {
 
   // Simple Mode toggle: defaults to true on entry for a clean, non-overwhelming initial experience
   const [isSimpleMode, setIsSimpleMode] = useState<boolean>(true);
+
+  // Incline slope angle: 0 = plano horizontal, > 0 = cuesta abajo
+  const [inclineAngle, setInclineAngle] = useState<number>(0);
+
+  // Vectors and physics parameters visibility checklist
+  const [visibilityFilters, setVisibilityFilters] = useState<VisibilityFilters>({
+    includeMass: true,
+    includeGravity: true,
+    showAppliedForce: true,
+    showFriction: true,
+    showNetForce: true,
+  });
 
   // Modal states (preserves simulator state when opened/closed)
   const [isExplainOpen, setIsExplainOpen] = useState(false);
@@ -38,6 +50,9 @@ export default function App() {
   const [materialId, setMaterialId] = useState<MaterialId>('madera');
   const [timeScale, setTimeScale] = useState<number>(1);
   const [speedLimit, setSpeedLimit] = useState<number | null>(null); // null = sin límite, or 10, 25, 50 m/s
+
+  // Effective mass: if includeMass is unchecked, automatically locks to default 10 kg
+  const effectiveMass = visibilityFilters.includeMass ? mass : 10;
 
   // Kinematic Simulation State
   const [status, setStatus] = useState<SimulationStatus>('idle');
@@ -57,8 +72,8 @@ export default function App() {
 
   // Derived real-time physics values
   const derived = useMemo(() => {
-    return calculateDerivedPhysics(mass, appliedForce, activeMaterial, velocity, undefined, undefined, speedLimit);
-  }, [mass, appliedForce, activeMaterial, velocity, speedLimit]);
+    return calculateDerivedPhysics(effectiveMass, appliedForce, activeMaterial, velocity, undefined, undefined, speedLimit, inclineAngle);
+  }, [effectiveMass, appliedForce, activeMaterial, velocity, speedLimit, inclineAngle]);
 
   // Trigger alert banner helper
   const triggerBreachedAlert = useCallback(() => {
@@ -81,7 +96,7 @@ export default function App() {
 
   // State ref for smooth, high-fps requestAnimationFrame loop without stale closures
   const stateRef = useRef<PhysicsState>({
-    mass,
+    mass: effectiveMass,
     appliedForce,
     materialId,
     position,
@@ -93,18 +108,20 @@ export default function App() {
     hasBrokenStatic,
     distanceTraveled,
     timeScale,
-    speedLimit
+    speedLimit,
+    inclineAngle
   });
 
   // Sync state ref on prop changes
   useEffect(() => {
-    stateRef.current.mass = mass;
+    stateRef.current.mass = effectiveMass;
     stateRef.current.appliedForce = appliedForce;
     stateRef.current.materialId = materialId;
     stateRef.current.status = status;
     stateRef.current.timeScale = timeScale;
     stateRef.current.speedLimit = speedLimit;
-  }, [mass, appliedForce, materialId, status, timeScale, speedLimit]);
+    stateRef.current.inclineAngle = inclineAngle;
+  }, [effectiveMass, appliedForce, materialId, status, timeScale, speedLimit, inclineAngle]);
 
   // Continuous physics integration loop
   useEffect(() => {
@@ -248,6 +265,10 @@ export default function App() {
           onOpenExplain={() => setIsExplainOpen(true)}
           speedLimit={speedLimit}
           setSpeedLimit={setSpeedLimit}
+          inclineAngle={inclineAngle}
+          setInclineAngle={setInclineAngle}
+          visibilityFilters={visibilityFilters}
+          setVisibilityFilters={setVisibilityFilters}
         />
 
         {/* Explain Modal accessible from Simple Mode */}
@@ -351,6 +372,10 @@ export default function App() {
               showStaticBreachedAlert={showStaticBreachedAlert}
               speedLimit={speedLimit}
               isSpeedLimited={derived.isSpeedLimited}
+              inclineAngle={inclineAngle}
+              slopeParallelForce={derived.slopeParallelForce}
+              netForce={derived.netHorizontalForce}
+              visibilityFilters={visibilityFilters}
             />
 
             {/* Bottom Row: Control Panel + Real-time Friction Graph */}

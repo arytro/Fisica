@@ -66,6 +66,20 @@ const FAQ_ITEMS: FaqItem[] = [
     shortAnswer: '¡Sorprendentemente no! La fricción sigue valiendo exactamente lo mismo.',
     kidFriendlyExplanation: 'Parece mentira, pero en la física real la fricción no depende del tamaño de la base. Si acuestas la caja, hay más superficie tocando el suelo pero el peso se reparte más suave. Si paras la caja de canto, toca menos área pero todo el peso cae en un espacio chiquito y se clava más hondo. Al final, las dos cosas se cancelan exactamente y la fuerza de fricción es idéntica.',
     example: 'Solo importa qué tanto pesa la caja y de qué material está hecho el suelo.'
+  },
+  {
+    id: 'fuerza-neta',
+    question: '¿Qué es la Fuerza Neta (flecha verde ΣF) y por qué se hace más larga?',
+    shortAnswer: 'Es el "ganador" del tira y afloja entre tu empujón hacia adelante y la fricción que frena hacia atrás.',
+    kidFriendlyExplanation: 'Imagina que tú empujas la caja con 80 N hacia la derecha, pero la fricción frena con 30 N hacia la izquierda. ¿Con qué fuerza viaja realmente la caja? Con 80 - 30 = 50 N. Esa diferencia es la FUERZA NETA (ΣF). Si tú empujas muy fuerte, la flecha verde se alarga y la caja sale disparada hacia adelante acelerando como un cohete. Si la fricción empata tu empuje, la fuerza neta es 0 N y la caja no acelera.',
+    example: 'Es como la cuerda de tirar en un recreo: si el equipo de adelante jala con 80 N y el de atrás con 30 N, la cuerda se mueve hacia adelante con 50 N.'
+  },
+  {
+    id: 'modo-cuesta',
+    question: '¿Por qué en el Modo Cuesta (cuesta abajo) la caja a veces se desliza sola sin empujarla?',
+    shortAnswer: '¡Porque la gravedad de la Tierra ahora ayuda a empujarla cuesta abajo!',
+    kidFriendlyExplanation: 'En un piso plano, la gravedad solo aplasta la caja contra el suelo. Pero cuando inclinas el suelo en una rampa o colina (cuesta abajo), la gravedad se divide en dos: una parte sigue aplastando la caja contra la rampa, ¡pero otra parte la empuja cuesta abajo por la pendiente! Si la superficie es resbalosa como el hielo, esa fuerza de la gravedad supera la fricción estática y la caja sale patinando sola hacia abajo.',
+    example: 'Es igual que cuando te montas en un tobogán o en una patineta en una bajadita: ¡nadie tiene que empujarte para que bajes!'
   }
 ];
 
