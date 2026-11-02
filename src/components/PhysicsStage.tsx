@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Material, MotionState } from '../types/physics';
 import { ArrowRight, MoveRight, Flame, ShieldAlert, Sparkles, Gauge } from 'lucide-react';
+import { StickmanPusher } from './StickmanPusher';
 
 interface PhysicsStageProps {
   mass: number;
@@ -211,10 +212,10 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
               </div>
             )}
 
-            {/* 4. Friction Force Arrow (LEFT - Amber/Red) */}
+            {/* 4. Friction Force Arrow (LEFT - Amber/Red at contact surface) */}
             {actualFriction > 0 && (
               <div
-                className="absolute top-1/2 right-[100%] -translate-y-1/2 flex items-center flex-row-reverse pointer-events-none transition-all duration-100 z-20"
+                className="absolute bottom-1 right-[100%] flex items-center flex-row-reverse pointer-events-none transition-all duration-100 z-30"
                 style={{ width: `${frictionArrowWidth}px` }}
               >
                 <div className="h-1 flex-1 bg-gradient-to-l from-amber-500 to-rose-400 shadow-sm shadow-rose-400/50" />
@@ -224,6 +225,16 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Stickman Pusher / Chaser Character */}
+            <StickmanPusher
+              appliedForce={appliedForce}
+              velocity={velocity}
+              boxWidth={boxWidth}
+              boxHeight={boxHeight}
+              position={position}
+              isMoving={isMoving}
+            />
 
             {/* Movement Direction Indicator Badge */}
             {isMoving && (
