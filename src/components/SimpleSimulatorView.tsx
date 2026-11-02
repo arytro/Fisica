@@ -1,9 +1,10 @@
-import React from 'react';
-import { ArrowRight, Compass, HelpCircle, Play, Pause, RotateCcw, Zap, Sparkles, Gauge, CheckSquare, Mountain, Sliders, Scale } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, Compass, HelpCircle, Play, Pause, RotateCcw, Zap, Sparkles, Gauge, CheckSquare, Mountain, Sliders, Scale, Calculator } from 'lucide-react';
 import { Material, MaterialId, MotionState, PhysicsDerivedValues, SimulationStatus, VisibilityFilters } from '../types/physics';
 import { MATERIALS } from '../data/materials';
 import { PhysicsStage } from './PhysicsStage';
 import { FrictionGraph } from './FrictionGraph';
+import { FormulaModal } from './FormulaModal';
 import { sound } from '../utils/audio';
 
 interface SimpleSimulatorViewProps {
@@ -63,6 +64,11 @@ export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
   visibilityFilters,
   setVisibilityFilters
 }) => {
+  const [isFormulaOpen, setIsFormulaOpen] = useState(false);
+
+  // Effective mass: if includeMass is unchecked, automatically locks to default 10 kg
+  const effectiveMass = visibilityFilters.includeMass ? mass : 10;
+
   // Preset handlers
   const handlePresetForcesOnly = () => {
     sound.playClick();
@@ -112,14 +118,23 @@ export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons: Explícame & Ingresar */}
-        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+        {/* Action Buttons: Explícame, Fórmula & Ingresar */}
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap sm:flex-nowrap">
           <button
             onClick={() => { sound.playClick(); onOpenExplain(); }}
             className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs sm:text-sm font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <HelpCircle className="w-4 h-4 text-cyan-400" />
             <span>EXPLÍCAME</span>
+          </button>
+
+          <button
+            onClick={() => { sound.playClick(); setIsFormulaOpen(true); }}
+            className="px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 text-xs sm:text-sm font-extrabold border border-amber-500/40 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-amber-500/10"
+            title="Ver la fórmula matemática resultante y desglose paso a paso"
+          >
+            <Calculator className="w-4 h-4 text-amber-400 stroke-[2.2]" />
+            <span>FÓRMULA</span>
           </button>
 
           <button
@@ -154,8 +169,17 @@ export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Presets Buttons */}
-          <div className="flex items-center gap-2">
+          {/* Quick Presets Buttons & Formula Button */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <button
+              onClick={() => { sound.playClick(); setIsFormulaOpen(true); }}
+              className="px-3 py-1 rounded-lg text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-300 hover:brightness-110 text-slate-950 border border-amber-300/80 shadow-md shadow-yellow-500/20 flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.03] active:scale-[0.97]"
+              title="Muestra la fórmula adaptada a lo que tienes seleccionado y el cálculo paso a paso"
+            >
+              <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>FÓRMULA</span>
+            </button>
+
             <button
               onClick={handlePresetForcesOnly}
               className="px-3 py-1 rounded-lg text-xs font-bold bg-cyan-950/90 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-cyan-500/10"
@@ -559,6 +583,22 @@ export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
         </div>
 
       </div>
+
+      {/* Dynamic Formula & Step-by-Step Breakdown Modal */}
+      <FormulaModal
+        isOpen={isFormulaOpen}
+        onClose={() => setIsFormulaOpen(false)}
+        appliedForce={appliedForce}
+        mass={mass}
+        effectiveMass={effectiveMass}
+        activeMaterial={activeMaterial}
+        derived={derived}
+        velocity={velocity}
+        acceleration={acceleration}
+        motionState={motionState}
+        inclineAngle={inclineAngle}
+        visibilityFilters={visibilityFilters}
+      />
 
     </div>
   );
