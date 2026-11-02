@@ -111,8 +111,12 @@ export const PhysicalIndicators: React.FC<PhysicalIndicatorsProps> = ({
           <div className="font-mono font-bold text-xl text-teal-300 tabular-nums">
             {velocity.toFixed(2)} <span className="text-xs font-normal text-slate-400 font-sans">m/s</span>
           </div>
-          <div className="text-[10px] mt-0.5 font-bold flex items-center gap-1">
-            {isMoving ? (
+          <div className="text-[10px] mt-0.5 font-bold flex flex-wrap items-center gap-1">
+            {derived.isSpeedLimited ? (
+              <span className="text-amber-300 font-mono flex items-center gap-1 bg-amber-950/80 px-1 py-0.5 rounded border border-amber-800/60">
+                ⚡ TOPE {derived.speedLimit} m/s
+              </span>
+            ) : isMoving ? (
               <span className="text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" /> EN MOVIMIENTO
               </span>

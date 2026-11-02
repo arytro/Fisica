@@ -30,6 +30,8 @@ export interface PhysicsState {
   hasBrokenStatic: boolean;
   distanceTraveled: number; // meters
   timeScale: number; // 0.5, 1, 2
+  speedLimit: number | null; // null = sin límite, or 10, 25, 50 m/s
+  isSpeedLimited?: boolean; // true if currently clamped at governor
 }
 
 export interface PhysicsDerivedValues {
@@ -42,6 +44,8 @@ export interface PhysicsDerivedValues {
   isOvercomingStatic: boolean; // appliedForce > maxStaticFriction
   netHorizontalForce: number; // F_net = F_applied - friction
   instantAcceleration: number; // a = F_net / m
+  speedLimit?: number | null;
+  isSpeedLimited?: boolean;
 }
 
 export type Difficulty = 'facil' | 'intermedio' | 'dificil';

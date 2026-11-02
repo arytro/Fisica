@@ -37,6 +37,7 @@ export default function App() {
   const [appliedForce, setAppliedForce] = useState<number>(0); // N
   const [materialId, setMaterialId] = useState<MaterialId>('madera');
   const [timeScale, setTimeScale] = useState<number>(1);
+  const [speedLimit, setSpeedLimit] = useState<number | null>(null); // null = sin límite, or 10, 25, 50 m/s
 
   // Kinematic Simulation State
   const [status, setStatus] = useState<SimulationStatus>('idle');
@@ -56,8 +57,8 @@ export default function App() {
 
   // Derived real-time physics values
   const derived = useMemo(() => {
-    return calculateDerivedPhysics(mass, appliedForce, activeMaterial, velocity);
-  }, [mass, appliedForce, activeMaterial, velocity]);
+    return calculateDerivedPhysics(mass, appliedForce, activeMaterial, velocity, undefined, undefined, speedLimit);
+  }, [mass, appliedForce, activeMaterial, velocity, speedLimit]);
 
   // Trigger alert banner helper
   const triggerBreachedAlert = useCallback(() => {
@@ -91,7 +92,8 @@ export default function App() {
     motionState,
     hasBrokenStatic,
     distanceTraveled,
-    timeScale
+    timeScale,
+    speedLimit
   });
 
   // Sync state ref on prop changes
@@ -101,7 +103,8 @@ export default function App() {
     stateRef.current.materialId = materialId;
     stateRef.current.status = status;
     stateRef.current.timeScale = timeScale;
-  }, [mass, appliedForce, materialId, status, timeScale]);
+    stateRef.current.speedLimit = speedLimit;
+  }, [mass, appliedForce, materialId, status, timeScale, speedLimit]);
 
   // Continuous physics integration loop
   useEffect(() => {
@@ -243,6 +246,8 @@ export default function App() {
           onReset={handleReset}
           onEnterFullLab={() => setIsSimpleMode(false)}
           onOpenExplain={() => setIsExplainOpen(true)}
+          speedLimit={speedLimit}
+          setSpeedLimit={setSpeedLimit}
         />
 
         {/* Explain Modal accessible from Simple Mode */}
@@ -344,6 +349,8 @@ export default function App() {
               motionState={motionState}
               material={activeMaterial}
               showStaticBreachedAlert={showStaticBreachedAlert}
+              speedLimit={speedLimit}
+              isSpeedLimited={derived.isSpeedLimited}
             />
 
             {/* Bottom Row: Control Panel + Real-time Friction Graph */}
@@ -364,6 +371,8 @@ export default function App() {
                   onReset={handleReset}
                   timeScale={timeScale}
                   setTimeScale={setTimeScale}
+                  speedLimit={speedLimit}
+                  setSpeedLimit={setSpeedLimit}
                 />
               </div>
 

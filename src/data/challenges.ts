@@ -19,7 +19,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'N',
     correctAnswer: 98.1,
     tolerance: 0.5,
-    options: [98.1, 10.0, 40.0, 9.81],
+    options: [10.0, 40.0, 98.1, 9.81], // Opción C
     formulaUsed: 'N = m · g',
     explanation: 'En una superficie horizontal sin fuerzas verticales externas adicionales, la fuerza normal equilibra exactamente el peso del objeto (W = m · g).',
     solutionSteps: [
@@ -45,7 +45,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'N',
     correctAnswer: 39.24,
     tolerance: 0.3,
-    options: [39.24, 29.43, 98.1, 4.0],
+    options: [29.43, 39.24, 98.1, 4.0], // Opción B
     formulaUsed: 'fs_máx = μs · N',
     explanation: 'Para iniciar el movimiento, la fuerza aplicada debe ser estrictamente mayor a la fricción estática máxima (fs_máx).',
     solutionSteps: [
@@ -70,7 +70,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'N',
     correctAnswer: 19.62,
     tolerance: 0.2,
-    options: [19.62, 5.89, 196.2, 2.0],
+    options: [5.89, 196.2, 2.0, 19.62], // Opción D
     formulaUsed: 'fs_máx = μs · N',
     explanation: 'El bajo coeficiente del hielo (μs = 0.10) permite mover objetos pesados con fuerzas comparativamente muy reducidas.',
     solutionSteps: [
@@ -97,7 +97,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'N',
     correctAnswer: 73.58,
     tolerance: 0.5,
-    options: [73.58, 95.65, 147.15, 7.5],
+    options: [95.65, 147.15, 73.58, 7.5], // Opción C
     formulaUsed: 'fk = μk · N',
     explanation: 'Una vez que el objeto ya está en movimiento, la fricción que actúa es la cinética, cuyo valor depende únicamente de μk y de la fuerza normal.',
     solutionSteps: [
@@ -123,7 +123,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'm/s²',
     correctAnswer: 7.06,
     tolerance: 0.1,
-    options: [7.06, 10.0, 6.08, 4.12],
+    options: [10.0, 7.06, 6.08, 4.12], // Opción B
     formulaUsed: 'a = (F_aplicada - fk) / m',
     explanation: 'La Segunda Ley de Newton establece que F_resultante = m · a. Como la caja se mueve, la fricción que se opone es la cinética fk.',
     solutionSteps: [
@@ -150,7 +150,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'N',
     correctAnswer: 50.0,
     tolerance: 0.1,
-    options: [50.0, 181.49, 139.79, 0.0],
+    options: [181.49, 139.79, 0.0, 50.0], // Opción D
     formulaUsed: 'fs = F_aplicada (cuando F_aplicada ≤ fs_máx)',
     explanation: '¡Concepto clave! La fricción estática real se adapta y equilibra exactamente la fuerza aplicada hasta alcanzar su límite máximo.',
     solutionSteps: [
@@ -178,7 +178,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'N',
     correctAnswer: 353.16,
     tolerance: 0.5,
-    options: [353.16, 313.92, 392.40, 360.00],
+    options: [313.92, 353.16, 392.40, 360.00], // Opción B
     formulaUsed: 'fs_máx = μs · m · g',
     explanation: 'Como 360 N es ligeramente mayor que 353.16 N, el objeto SÍ comenzará a deslizarse inmediatamente.',
     solutionSteps: [
@@ -204,7 +204,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'm/s²',
     correctAnswer: 2.94,
     tolerance: 0.1,
-    options: [2.94, 9.81, 3.92, 1.50],
+    options: [9.81, 3.92, 2.94, 1.50], // Opción C
     formulaUsed: '|a| = μk · g',
     explanation: 'Cuando la única fuerza horizontal es la fricción cinética: fk = μk · m · g. Al dividir entre la masa m, la desaceleración resulta independiente de la masa: |a| = μk · g.',
     solutionSteps: [
@@ -230,7 +230,7 @@ export const CHALLENGE_QUESTIONS: ChallengeQuestion[] = [
     unit: 'N',
     correctAnswer: 147.15,
     tolerance: 0.5,
-    options: [147.15, 191.30, 294.30, 98.10],
+    options: [191.30, 294.30, 98.10, 147.15], // Opción D
     formulaUsed: 'F_app = fk = μk · N',
     explanation: 'Para mantener velocidad constante, la aceleración debe ser cero (a = 0). Según la Primera Ley de Newton, la fuerza aplicada debe equilibrar exactamente la fricción cinética fk.',
     solutionSteps: [

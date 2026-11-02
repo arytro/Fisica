@@ -27,6 +27,17 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({ onReturnToLab }) =
 
   const currentQ: ChallengeQuestion | undefined = questions[currentQuestionIndex];
 
+  // Dynamically shuffle options for the active question so positions vary on every attempt
+  const shuffledOptions = useMemo(() => {
+    if (!currentQ) return [];
+    const arr = [...currentQ.options];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [currentQ?.id]);
+
   const handleSelectOption = (opt: number) => {
     if (isAnswered) return;
     setSelectedAnswer(opt);
@@ -195,7 +206,7 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({ onReturnToLab }) =
 
           {/* Multiple Choice Options */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {currentQ.options.map((opt, idx) => {
+            {shuffledOptions.map((opt, idx) => {
               const isSelected = selectedAnswer === opt;
               let optionClass = 'bg-slate-950/70 border-slate-800 hover:bg-slate-800/70 hover:border-slate-700 text-slate-200';
 

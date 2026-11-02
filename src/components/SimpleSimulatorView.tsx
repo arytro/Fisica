@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Compass, HelpCircle, Play, Pause, RotateCcw, Zap, Sparkles } from 'lucide-react';
+import { ArrowRight, Compass, HelpCircle, Play, Pause, RotateCcw, Zap, Sparkles, Gauge } from 'lucide-react';
 import { Material, MaterialId, MotionState, PhysicsDerivedValues, SimulationStatus } from '../types/physics';
 import { MATERIALS } from '../data/materials';
 import { PhysicsStage } from './PhysicsStage';
@@ -27,6 +27,8 @@ interface SimpleSimulatorViewProps {
   onReset: () => void;
   onEnterFullLab: () => void;
   onOpenExplain: () => void;
+  speedLimit: number | null;
+  setSpeedLimit: (lim: number | null) => void;
 }
 
 export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
@@ -49,7 +51,9 @@ export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
   onPause,
   onReset,
   onEnterFullLab,
-  onOpenExplain
+  onOpenExplain,
+  speedLimit,
+  setSpeedLimit
 }) => {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-5 py-2 animate-fadeIn">
@@ -118,6 +122,8 @@ export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
           motionState={motionState}
           material={activeMaterial}
           showStaticBreachedAlert={showStaticBreachedAlert}
+          speedLimit={speedLimit}
+          isSpeedLimited={derived.isSpeedLimited}
         />
       </div>
 
@@ -198,6 +204,37 @@ export const SimpleSimulatorView: React.FC<SimpleSimulatorViewProps> = ({
               <span>0 N (Suelto)</span>
               <span>100 N</span>
               <span>200 N (Fuerte)</span>
+            </div>
+          </div>
+
+          {/* Selector de Límite de Velocidad (Governor) */}
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+              <Gauge className="w-3.5 h-3.5 text-cyan-400" />
+              <span>LÍMITE:</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {[
+                { label: 'Sin límite', val: null },
+                { label: '10 m/s', val: 10 },
+                { label: '25 m/s', val: 25 },
+                { label: '50 m/s', val: 50 },
+              ].map((item) => {
+                const active = speedLimit === item.val;
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => { sound.playClick(); setSpeedLimit(item.val); }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
+                      active
+                        ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-bold shadow-md shadow-cyan-500/25'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

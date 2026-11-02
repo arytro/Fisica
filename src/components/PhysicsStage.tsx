@@ -18,6 +18,8 @@ interface PhysicsStageProps {
   motionState: MotionState;
   material: Material;
   showStaticBreachedAlert: boolean;
+  speedLimit?: number | null;
+  isSpeedLimited?: boolean;
 }
 
 export const PhysicsStage: React.FC<PhysicsStageProps> = ({
@@ -35,7 +37,9 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
   distanceTraveled,
   motionState,
   material,
-  showStaticBreachedAlert
+  showStaticBreachedAlert,
+  speedLimit,
+  isSpeedLimited
 }) => {
   // Arrow scale factors (pixels per Newton)
   const maxArrowLength = 140;
@@ -85,8 +89,19 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
           </div>
         </div>
 
-        {/* Motion State Pill Indicator */}
-        <div className="flex items-center gap-2">
+        {/* Motion State & Speed Limit Badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          {speedLimit && (
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border transition-all ${
+              isSpeedLimited
+                ? 'bg-amber-500/25 border-amber-400 text-amber-200 animate-pulse shadow-md shadow-amber-500/20'
+                : 'bg-slate-900/90 border-slate-700 text-slate-300'
+            }`}>
+              <Gauge className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Tope: {speedLimit} m/s {isSpeedLimited ? '· [REGULADO]' : ''}</span>
+            </div>
+          )}
+
           {isMoving ? (
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-semibold animate-pulse">
               <Flame className="w-3.5 h-3.5 text-emerald-400" />
@@ -105,6 +120,16 @@ export const PhysicsStage: React.FC<PhysicsStageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Speed Limit Governor Alert Banner */}
+      {isSpeedLimited && (
+        <div className="absolute top-16 right-6 z-30 transition-all duration-300">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-200 text-xs font-bold font-mono shadow-lg shadow-amber-500/10">
+            <Gauge className="w-4 h-4 text-amber-400 animate-spin" />
+            <span>LÍMITE ALCANZADO ({speedLimit} m/s) - REGULADOR ACTIVO</span>
+          </div>
+        </div>
+      )}
 
       {/* Breached Static Friction Notification Banner */}
       {showStaticBreachedAlert && (

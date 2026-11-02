@@ -1,7 +1,7 @@
 import React from 'react';
 import { Material, MaterialId, SimulationStatus } from '../types/physics';
 import { MATERIALS } from '../data/materials';
-import { Play, Pause, RotateCcw, Sliders, Info, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Sliders, Info, Zap, Gauge } from 'lucide-react';
 import { sound } from '../utils/audio';
 
 interface ControlPanelProps {
@@ -21,6 +21,8 @@ interface ControlPanelProps {
   setCustomMuS?: (val: number | undefined) => void;
   customMuK?: number;
   setCustomMuK?: (val: number | undefined) => void;
+  speedLimit?: number | null;
+  setSpeedLimit?: (lim: number | null) => void;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -35,7 +37,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onPause,
   onReset,
   timeScale,
-  setTimeScale
+  setTimeScale,
+  speedLimit,
+  setSpeedLimit
 }) => {
   const currentMaterial = MATERIALS[selectedMaterialId];
 
@@ -69,33 +73,63 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           </div>
         </div>
 
-        {/* Speed multiplier control */}
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]">
-          <span className="text-slate-500 px-1.5 hidden sm:inline">Velocidad:</span>
-          <button
-            onClick={() => { sound.playClick(); setTimeScale(0.5); }}
-            className={`px-2 py-0.5 rounded font-mono transition-colors ${
-              timeScale === 0.5 ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            0.5x
-          </button>
-          <button
-            onClick={() => { sound.playClick(); setTimeScale(1); }}
-            className={`px-2 py-0.5 rounded font-mono transition-colors ${
-              timeScale === 1 ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            1x
-          </button>
-          <button
-            onClick={() => { sound.playClick(); setTimeScale(2); }}
-            className={`px-2 py-0.5 rounded font-mono transition-colors ${
-              timeScale === 2 ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            2x
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Speed Limit control */}
+          {setSpeedLimit && (
+            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]">
+              <span className="text-slate-400 px-1.5 flex items-center gap-1 font-semibold">
+                <Gauge className="w-3 h-3 text-cyan-400" />
+                <span>Límite:</span>
+              </span>
+              {[
+                { label: 'Sin límite', val: null },
+                { label: '10 m/s', val: 10 },
+                { label: '25 m/s', val: 25 },
+                { label: '50 m/s', val: 50 },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => { sound.playClick(); setSpeedLimit(item.val); }}
+                  className={`px-1.5 py-0.5 rounded font-mono transition-colors cursor-pointer ${
+                    speedLimit === item.val
+                      ? 'bg-cyan-500 text-slate-950 font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Speed multiplier control */}
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]">
+            <span className="text-slate-500 px-1.5 hidden sm:inline">Velocidad:</span>
+            <button
+              onClick={() => { sound.playClick(); setTimeScale(0.5); }}
+              className={`px-2 py-0.5 rounded font-mono transition-colors ${
+                timeScale === 0.5 ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              0.5x
+            </button>
+            <button
+              onClick={() => { sound.playClick(); setTimeScale(1); }}
+              className={`px-2 py-0.5 rounded font-mono transition-colors ${
+                timeScale === 1 ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              1x
+            </button>
+            <button
+              onClick={() => { sound.playClick(); setTimeScale(2); }}
+              className={`px-2 py-0.5 rounded font-mono transition-colors ${
+                timeScale === 2 ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              2x
+            </button>
+          </div>
         </div>
       </div>
 

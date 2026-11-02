@@ -11,7 +11,8 @@ export function calculateDerivedPhysics(
   material: Material,
   currentVelocity: number = 0,
   customMuS?: number,
-  customMuK?: number
+  customMuK?: number,
+  speedLimit?: number | null
 ): PhysicsDerivedValues {
   // Prevent invalid mass or forces
   const safeMass = Math.max(0.1, mass);
@@ -57,6 +58,8 @@ export function calculateDerivedPhysics(
     }
   }
 
+  const isSpeedLimited = speedLimit !== null && speedLimit !== undefined && speedLimit > 0 && currentVelocity >= speedLimit - 0.05;
+
   return {
     gravity: GRAVITY,
     normalForce,
@@ -66,7 +69,9 @@ export function calculateDerivedPhysics(
     actualFriction,
     isOvercomingStatic,
     netHorizontalForce,
-    instantAcceleration
+    instantAcceleration,
+    speedLimit,
+    isSpeedLimited
   };
 }
 
@@ -141,6 +146,19 @@ export function stepPhysics(
     }
   }
 
+  // Speed Limit Governor Clamp
+  let isSpeedLimited = false;
+  if (state.speedLimit !== null && state.speedLimit !== undefined && state.speedLimit > 0) {
+    if (velocity >= state.speedLimit) {
+      velocity = state.speedLimit;
+      isSpeedLimited = true;
+      if (acceleration > 0) {
+        acceleration = 0;
+        motionState = 'constant_speed';
+      }
+    }
+  }
+
   return {
     nextState: {
       ...state,
@@ -150,6 +168,7 @@ export function stepPhysics(
       acceleration,
       hasBrokenStatic,
       motionState,
+      isSpeedLimited,
       simulationTime: state.simulationTime + scaledDt
     },
     justBrokeStatic
