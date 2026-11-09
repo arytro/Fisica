@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://fisicafcinefesta.vercel.app/sitemap.xml
